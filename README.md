@@ -1,5 +1,3 @@
 xv6-homewor
 
-this is the test version
-
-test
+this is the test versizon
