@@ -172,6 +172,8 @@ UPROGS=\
 	_usertests\
 	_wc\
 	_zombie\
+	_a-zzx-app\
+	_a-pcpuid\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)

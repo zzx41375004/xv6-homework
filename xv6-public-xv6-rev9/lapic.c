@@ -99,7 +99,7 @@ lapicinit(void)
 }
 
 int
-cpunum(void)
+  cpunum(void)
 {
   int apicid, i;
   

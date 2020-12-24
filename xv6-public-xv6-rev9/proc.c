@@ -20,6 +20,12 @@ extern void trapret(void);
 
 static void wakeup1(void *chan);
 
+//getcpuid in kernel mode
+int getcpuid()
+{
+  return cpunum();
+}
+
 void
 pinit(void)
 {

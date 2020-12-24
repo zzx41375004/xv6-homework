@@ -7,6 +7,13 @@
 #include "mmu.h"
 #include "proc.h"
 
+//achieve sys_getcpuid, just my homework
+int
+sys_getcpuid()
+{
+  return getcpuid();
+}
+
 int
 sys_fork(void)
 {

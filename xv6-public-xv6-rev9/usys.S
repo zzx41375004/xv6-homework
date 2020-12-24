@@ -26,6 +26,8 @@ SYSCALL(mkdir)
 SYSCALL(chdir)
 SYSCALL(dup)
 SYSCALL(getpid)
+SYSCALL(getcpuid)
 SYSCALL(sbrk)
 SYSCALL(sleep)
 SYSCALL(uptime)
+

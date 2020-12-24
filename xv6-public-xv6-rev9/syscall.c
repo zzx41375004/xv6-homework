@@ -6,6 +6,8 @@
 #include "proc.h"
 #include "x86.h"
 #include "syscall.h"
+#include "sysproc.h"
+#include "sysfile.h"
 
 // User code makes a system call with INT T_SYSCALL.
 // System call number in %eax.
@@ -77,27 +79,31 @@ argstr(int n, char **pp)
   return fetchstr(addr, pp);
 }
 
-extern int sys_chdir(void);
-extern int sys_close(void);
-extern int sys_dup(void);
-extern int sys_exec(void);
-extern int sys_exit(void);
-extern int sys_fork(void);
-extern int sys_fstat(void);
-extern int sys_getpid(void);
-extern int sys_kill(void);
-extern int sys_link(void);
-extern int sys_mkdir(void);
-extern int sys_mknod(void);
-extern int sys_open(void);
-extern int sys_pipe(void);
-extern int sys_read(void);
-extern int sys_sbrk(void);
-extern int sys_sleep(void);
-extern int sys_unlink(void);
-extern int sys_wait(void);
-extern int sys_write(void);
-extern int sys_uptime(void);
+/* have included in sysfile.h */
+// extern int sys_chdir(void);
+// extern int sys_close(void);
+// extern int sys_dup(void);
+// extern int sys_exec(void);
+// extern int sys_fstat(void);
+// extern int sys_link(void);
+// extern int sys_mkdir(void);
+// extern int sys_mknod(void);
+// extern int sys_open(void);
+// extern int sys_pipe(void);
+// extern int sys_read(void);
+// extern int sys_unlink(void);
+// extern int sys_write(void);
+
+/* these funcs have included by sysproc.h */
+// extern int sys_uptime(void);
+// extern int sys_sleep(void);
+// extern int sys_sbrk(void);
+// extern int sys_getpid(void);
+// extern int sys_kill(void);
+// extern int sys_wait(void);
+// extern int sys_exit(void);
+// extern int sys_fork(void);
+// extern int sys_getcpuid(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -121,6 +127,7 @@ static int (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
+[SYS_getcpuid]  sys_getcpuid,
 };
 
 void
