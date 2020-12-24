@@ -63,7 +63,11 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+  int priority;
+  int slot;                    //one slot contains 8 ticks
 };
+
+#define SLOT 8
 
 // Process memory is laid out contiguously, low addresses first:
 //   text
