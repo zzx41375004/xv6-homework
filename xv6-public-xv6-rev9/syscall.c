@@ -103,6 +103,8 @@ static int (*syscalls[])(void) = {
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
 [SYS_getcpuid]  sys_getcpuid,
+[SYS_alloc]   sys_alloc,
+[SYS_free]    sys_free,
 };
 
 void

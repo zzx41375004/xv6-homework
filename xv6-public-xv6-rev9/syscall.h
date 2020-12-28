@@ -21,3 +21,5 @@
 #define SYS_mkdir  20
 #define SYS_close  21
 #define SYS_getcpuid  22
+#define SYS_alloc	23
+#define	SYS_free	24

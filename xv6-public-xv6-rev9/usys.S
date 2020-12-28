@@ -30,4 +30,6 @@ SYSCALL(getcpuid)
 SYSCALL(sbrk)
 SYSCALL(sleep)
 SYSCALL(uptime)
+SYSCALL(alloc)
+SYSCALL(free)
 

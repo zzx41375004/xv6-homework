@@ -24,6 +24,8 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 int getcpuid(void);
+int alloc(int);
+int free(char*);
 
 // ulib.c
 int stat(char*, struct stat*);

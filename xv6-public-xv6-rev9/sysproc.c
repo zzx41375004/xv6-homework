@@ -7,6 +7,16 @@
 #include "mmu.h"
 #include "proc.h"
 
+int sys_free(char* buff)
+{
+  return myreduceproc(buff);
+}
+
+int sys_alloc(int n)
+{
+  return mygrowproc(n);
+}
+
 //achieve sys_getcpuid, just my homework
 int
 sys_getcpuid()

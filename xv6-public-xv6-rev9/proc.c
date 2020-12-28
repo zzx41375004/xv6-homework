@@ -53,6 +53,13 @@ found:
   p->state = EMBRYO;
   p->pid = nextpid++;
 
+  for (int i = 0; i < 10; ++i)
+  {
+    p->vm[i].next = -1;
+    p->vm[i].length = 0;
+  }
+  p->vm[0].next = 0;
+
   // Allocate kernel stack.
   if((p->kstack = kalloc()) == 0){
     p->state = UNUSED;
@@ -472,7 +479,10 @@ procdump(void)
       state = states[p->state];
     else
       state = "???";
-    cprintf("%d %s %s", p->pid, state, p->name);
+    cprintf("\npid:%d, state: %s, name: %s\n", p->pid, state, p->name);
+    for(int i = p->vm[0].next; i!=0; i=p->vm[i].next){
+      cprintf("start: %d, length: %d\n",p->vm[i].start,p->vm[i].length);
+    }
     if(p->state == SLEEPING){
       getcallerpcs((uint*)p->context->ebp+2, pc);
       for(i=0; i<10 && pc[i] != 0; i++)
