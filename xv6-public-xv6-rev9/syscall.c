@@ -79,32 +79,7 @@ argstr(int n, char **pp)
   return fetchstr(addr, pp);
 }
 
-/* have included in sysfile.h */
-// extern int sys_chdir(void);
-// extern int sys_close(void);
-// extern int sys_dup(void);
-// extern int sys_exec(void);
-// extern int sys_fstat(void);
-// extern int sys_link(void);
-// extern int sys_mkdir(void);
-// extern int sys_mknod(void);
-// extern int sys_open(void);
-// extern int sys_pipe(void);
-// extern int sys_read(void);
-// extern int sys_unlink(void);
-// extern int sys_write(void);
-
-/* these funcs have included by sysproc.h */
-// extern int sys_uptime(void);
-// extern int sys_sleep(void);
-// extern int sys_sbrk(void);
-// extern int sys_getpid(void);
-// extern int sys_kill(void);
-// extern int sys_wait(void);
-// extern int sys_exit(void);
-// extern int sys_fork(void);
-// extern int sys_getcpuid(void);
-
+/*included in sysfile.h and sysproc.h*/
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
 [SYS_exit]    sys_exit,
