@@ -7,6 +7,6 @@ int sys_kill(void);
 int sys_getpid(void);
 int sys_sbrk(void);
 int sys_sleep(void);
-int sys_alloc(int);
-int sys_free(char*);
+int sys_myalloc(void);
+int sys_myfree(void);
 

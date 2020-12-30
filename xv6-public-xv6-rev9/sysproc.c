@@ -7,14 +7,23 @@
 #include "mmu.h"
 #include "proc.h"
 
-int sys_free(char* buff)
+int 
+sys_myalloc(void)
 {
-  return myreduceproc(buff);
+  int n;   // 分配 n 个字节
+  if(argint(0, &n) < 0)
+    return 0;
+  if(n <= 0)
+    return 0;
+  return mygrowproc(n);
 }
 
-int sys_alloc(int n)
-{
-  return mygrowproc(n);
+int 
+sys_myfree(void) {
+  int addr;
+  if(argint(0, &addr) < 0)
+    return -1;
+  return myreduceproc(addr);
 }
 
 //achieve sys_getcpuid, just my homework

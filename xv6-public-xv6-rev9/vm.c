@@ -305,17 +305,17 @@ int mydeallocuvm(pde_t *pgdir,uint start,uint end){
     pte = walkpgdir(pgdir,(char*)a,0);
     if(!pte){
       a += (NPDENTRIES-1)*PGSIZE;
-      else if((*pte & PTE_P)!=0){
-        pa=PTE_ADDR(*pte);
-        if(pa == 0){
-          panic("kfree");
-        }
-        char *v = P2V(pa);
-        kfree(v);
-        *pte=0;
+    }else if((*pte & PTE_P)!=0){
+      pa=PTE_ADDR(*pte);
+      if(pa == 0){
+        panic("kfree");
       }
+      char *v = P2V(pa);
+      kfree(v);
+      *pte=0;
     }
   }
+  return 1;
 }
 
 
