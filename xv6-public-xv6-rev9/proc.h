@@ -52,7 +52,7 @@ struct vma
 {
   int start;
   int length;
-  int next;
+  int next;// 下一块内存索引，-1 表示未分配，0 表示没有下一个
 };
 
 // Per-process state

@@ -249,6 +249,24 @@ allocuvm(pde_t *pgdir, uint oldsz, uint newsz)
   return newsz;
 }
 
+int myallocuvm(pde_t *pgdir,uint start, uint end){
+  char *mem;
+  uint a;
+
+  a = PGROUNDUP(start);
+  for(;a<end; a += PGSIZE){
+    mem = kalloc();
+    if(mem == 0){
+      //something
+    }
+    memset(mem, 0 , PGSIZE);
+    if(mappages(pgdir, (char*)a,PGSIZE,V2P(mem),PTE_W|PTE_U)<0){
+      //something
+    }
+  }
+  return (end - start);
+}
+
 // Deallocate user pages to bring the process size from oldsz to
 // newsz.  oldsz and newsz need not be page-aligned, nor does newsz
 // need to be less than oldsz.  oldsz can be larger than the actual
@@ -278,6 +296,29 @@ deallocuvm(pde_t *pgdir, uint oldsz, uint newsz)
   }
   return newsz;
 }
+
+int mydeallocuvm(pde_t *pgdir,uint start,uint end){
+  pte_t *pte;
+  uint a,pa;
+  a=PGROUNDUP(start);
+  for(;a<end;a += PGSIZE){
+    pte = walkpgdir(pgdir,(char*)a,0);
+    if(!pte){
+      a += (NPDENTRIES-1)*PGSIZE;
+      else if((*pte & PTE_P)!=0){
+        pa=PTE_ADDR(*pte);
+        if(pa == 0){
+          panic("kfree");
+        }
+        char *v = P2V(pa);
+        kfree(v);
+        *pte=0;
+      }
+    }
+  }
+}
+
+
 
 // Free a page table and all the physical memory pages
 // in the user part.

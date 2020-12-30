@@ -491,3 +491,52 @@ procdump(void)
     cprintf("\n");
   }
 }
+
+
+int mygrowproc(int n){
+  struct vma *vm = proc->vm;
+  int start = proc->sz;
+  int pre=0;
+  int i,k;
+  for(i = vm[0].next; i != 0; i=vm[i].next)//find the fist suitable
+  {
+    if (start + n < vm[i].start)
+    {
+      break;
+    }
+    start = vm[i].start + vm[i].length;
+    pre = i;
+  }
+  for(k = 1; k < 10; ++k){
+    if(vm[k].next == -1){
+      vm[k].next = i;
+      vm[k].start = start;
+      vm[k].length = n;
+      vm[pre].next = k;
+      myallocuvm(proc->pgdir, start , start + n);
+      switchuvm(proc);
+      return start;
+    }
+  }
+  switchuvm(proc);
+  return 0; 
+}
+
+int myreduceproc(int start){
+  int prev=0;
+  int i;
+  for(i=proc->vm[0].next; i!=0; i=proc->vm[i].next){
+      if(proc->vm[i].start == start){
+        mydeallocuvm(proc->pgdir,start,start+proc->vm[i].length);
+        proc->vm[prev].next = proc->vm[i].next;
+        proc->vm[i].next=-1;
+        switchuvm(proc);
+        return 0;
+      }
+      prev=i;
+  }
+  cprintf("warning: free vma at %x! \n",start);
+  return -1;
+}
+
+
