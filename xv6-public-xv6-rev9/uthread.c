@@ -46,4 +46,30 @@ int thread_create(void(*start_routine)(void*), void *arg){
             threads[i].used = 0;
         }
     }
+    void *stack = malloc(PGSIZE);
+    int pid = clone(start_routine);
+    add_thread(&pid,stack);
+    return pid;
 }
+
+int thread_join(void){
+    for(int i = 0; i < NTHREAD; ++i){
+        if(threads[i].used == 1){
+            int pid = join(&threads[i].ustack);
+            if(pid > 0){
+                remove_thread(&pid);
+                return pid;
+            }
+        }
+    }
+    return 0;
+}
+
+void printTCB(void){
+    for (int i = 0; i < NTHREAD; ++i)
+    {
+        printf(1,"TCB %d:%d\n",i,threads[i].used);
+    }
+    
+}
+
