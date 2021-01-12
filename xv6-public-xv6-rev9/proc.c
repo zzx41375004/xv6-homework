@@ -25,7 +25,6 @@ int getcpuid()
 {
   return cpunum();
 }
-
 void
 pinit(void)
 {
