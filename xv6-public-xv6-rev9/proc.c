@@ -214,7 +214,11 @@ exit(void)
   acquire(&ptable.lock);
 
   // Parent might be sleeping in wait().
-  wakeup1(proc->parent);
+  if(proc->parent == 0 && proc -> pthread!=0){
+    wakeup1(proc->pthread);
+  }else{
+    wakeup1(proc->parent);
+  }
 
   // Pass abandoned children to init.
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
@@ -543,7 +547,7 @@ int myreduceproc(int start){
 int clone(void(*fcn)(void*),void* arg, void* stack)
 {
   cprintf("in clone, stack start addr = %p\n",stack);
-  struct proc *curproc = myproc();  //record the process calling for clone
+  struct proc *curproc = proc;  //record the process calling for clone
   struct proc *np;
   if((np = allocproc()) == 0){
     return -1;
@@ -583,6 +587,48 @@ int clone(void(*fcn)(void*),void* arg, void* stack)
   release(&ptable.lock);
 
   return pid;
-  
+}
+
+int
+join(void **stack)
+{
+  cprintf("in join, stack pointer = %p\n",*stack);
+  struct proc *p;
+  int havekids;
+
+  acquire(&ptable.lock);
+  for(;;){
+    // Scan through table looking for zombie children.
+    havekids = 0;
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->parent != proc)
+        continue;
+      havekids = 1;
+      if(p->state == ZOMBIE){
+        // Found one.
+        pid = p->pid;
+        kfree(p->kstack);
+        p->kstack = 0;
+        p->pid = 0;
+        p->parent = 0;
+        p->pthread = 0;
+        p->ustack = 0;
+        p->name[0] = 0;
+        p->killed = 0;
+        p->state = UNUSED;
+        release(&ptable.lock);
+        return pid;
+      }
+    }
+
+    // No point waiting if we don't have any children.
+    if(!havekids || proc->killed){
+      release(&ptable.lock);
+      return -1;
+    }
+
+    // Wait for children to exit.  (See wakeup1 call in proc_exit.)
+    sleep(proc, &ptable.lock);  //DOC: wait-sleep
+  }
 }
 
