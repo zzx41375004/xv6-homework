@@ -20,6 +20,8 @@ extern void trapret(void);
 
 static void wakeup1(void *chan);
 
+
+
 //getcpuid in kernel mode
 int getcpuid()
 {
@@ -538,4 +540,49 @@ int myreduceproc(int start){
   return -1;
 }
 
+int clone(void(*fcn)(void*),void* arg, void* stack)
+{
+  cprintf("in clone, stack start addr = %p\n",stack);
+  struct proc *curproc = myproc();  //record the process calling for clone
+  struct proc *np;
+  if((np = allocproc()) == 0){
+    return -1;
+  }
+
+  np->pgdir = curproc->pgdir;
+  np->sz = curproc->sz;
+  np->pthread = curproc;
+
+  np->ustack = stack;
+  np->parent = 0;
+  *np->tf = *curproc->tf;
+  
+  int *sp = stack + 4096 -8;
+
+  np->tf->eip = (int)fcn;
+  np->tf->esp = (int)sp;
+  np->tf->ebp = (int)sp;
+  np->tf->eax = 0;
+
+  *(sp + 1)=(int)arg;
+  *sp = 0xffffffff;
+
+  for (int i = 0; i < NOFILE; ++i)
+  {
+    if(curproc->ofile[i]){
+      np->ofile[i] = filedup(curproc->ofile[i]);
+    }
+  }
+  np->cwd = idup(curproc->cwd);
+
+  safestrcpy(np->name,curproc->name,sizeof(curproc->name));
+  int pid = np->pid;
+
+  acquire(&ptable.lock);
+  np->state = RUNNABLE;
+  release(&ptable.lock);
+
+  return pid;
+  
+}
 
