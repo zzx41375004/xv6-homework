@@ -14,13 +14,13 @@ main(int argc, char *argv[]) {
   char* m4 = (char*)myalloc(7 * 4096);
   char* m5 = (char*)myalloc(9 * 4096);
 
-  m1[1] = 'a';
+  m1[0] = 'a';
   m2[2] = 'b';
   m3[2] = 'b';
   m4[2] = 'b';
   m5[2] = 'b';
 
-  printf(1,"m1:%s\n",m1);
+  printf(1,"m1 : %s\n",m1);
   myfree(m2);
 
   //m2[1] = 'p';
