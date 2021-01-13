@@ -1,7 +1,7 @@
 80100000 .text
 80107520 .rodata
-80107f78 .stab
-80107f79 .stabstr
+80107f98 .stab
+80107f99 .stabstr
 80108000 .data
 8010a520 .bss
 00000000 .debug_line
@@ -59,11 +59,11 @@
 801037c0 allocproc
 8010a004 first.1588
 8010a5bc initproc
-80107c00 states.1613
+80107c3c states.1613
 00000000 spinlock.c
 00000000 string.c
 00000000 syscall.c
-80107c80 syscalls
+80107ca0 syscalls
 00000000 sysfile.c
 80104d10 create
 80104eb0 argfd.constprop.0
