@@ -175,6 +175,7 @@ UPROGS=\
 	_a-zzx-app\
 	_a-pcpuid\
 	_myalloc\
+	_test-thread\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)

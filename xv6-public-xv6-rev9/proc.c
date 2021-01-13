@@ -544,7 +544,7 @@ int myreduceproc(int start){
   return -1;
 }
 
-int clone(void(*fcn)(void*),void* arg, void* stack)
+int clone(void (*fcn)(void*),void* arg, void* stack)
 {
   cprintf("in clone, stack start addr = %p\n",stack);
   struct proc *curproc = proc;  //record the process calling for clone
@@ -561,7 +561,7 @@ int clone(void(*fcn)(void*),void* arg, void* stack)
   np->parent = 0;
   *np->tf = *curproc->tf;
   
-  int *sp = stack + 4096 -8;
+  int *sp = stack + 4096 - 8;
 
   np->tf->eip = (int)fcn;
   np->tf->esp = (int)sp;
@@ -600,13 +600,14 @@ join(void **stack)
   for(;;){
     // Scan through table looking for zombie children.
     havekids = 0;
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; ++p){
       if(p->parent != proc)
         continue;
       havekids = 1;
       if(p->state == ZOMBIE){
         // Found one.
-        pid = p->pid;
+        *stack = p->ustack;
+        int pid = p->pid;
         kfree(p->kstack);
         p->kstack = 0;
         p->pid = 0;
@@ -630,5 +631,7 @@ join(void **stack)
     // Wait for children to exit.  (See wakeup1 call in proc_exit.)
     sleep(proc, &ptable.lock);  //DOC: wait-sleep
   }
+
+  // return 0;
 }
 

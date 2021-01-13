@@ -26,6 +26,8 @@ int uptime(void);
 int getcpuid(void);
 char* myalloc(int);
 int myfree(void*);
+int clone(void (*fcn)(void*),void* arg, void* stack);
+int join(void**);
 
 // ulib.c
 int stat(char*, struct stat*);
@@ -40,3 +42,10 @@ void* memset(void*, int, uint);
 void* malloc(uint);
 void free(void*);
 int atoi(const char*);
+
+//uthread.c
+void add_thread(int* pid, void* ustack);
+void remove_thread(int* pid);
+int thread_create(void(*start_routine)(void*), void *arg);
+int thread_join(void);
+void printTCB(void);

@@ -25,7 +25,7 @@ void add_thread(int* pid, void* ustack){
 void remove_thread(int* pid){
     for (int i = 0; i < NTHREAD; ++i)
     {
-        if(threads[i].used && thread[i].pid == *pid){
+        if(threads[i].used && threads[i].pid == *pid){
             free(threads[i].ustack);
             threads[i].pid = 0;
             threads[i].ustack = 0;
@@ -47,7 +47,7 @@ int thread_create(void(*start_routine)(void*), void *arg){
         }
     }
     void *stack = malloc(PGSIZE);
-    int pid = clone(start_routine);
+    int pid = clone(start_routine, arg, stack);
     add_thread(&pid,stack);
     return pid;
 }

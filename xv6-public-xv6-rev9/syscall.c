@@ -105,6 +105,8 @@ static int (*syscalls[])(void) = {
 [SYS_getcpuid]  sys_getcpuid,
 [SYS_myalloc]   sys_myalloc,
 [SYS_myfree]    sys_myfree,
+[SYS_clone]     sys_clone,
+[SYS_join]      sys_join,
 };
 
 void

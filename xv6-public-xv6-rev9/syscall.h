@@ -23,3 +23,5 @@
 #define SYS_getcpuid  22
 #define SYS_myalloc	23
 #define	SYS_myfree	24
+#define SYS_clone	25
+#define SYS_join	26

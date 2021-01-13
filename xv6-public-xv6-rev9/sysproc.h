@@ -9,4 +9,6 @@ int sys_sbrk(void);
 int sys_sleep(void);
 int sys_myalloc(void);
 int sys_myfree(void);
+int sys_clone(void);
+int sys_join(void);
 

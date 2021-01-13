@@ -32,4 +32,6 @@ SYSCALL(sleep)
 SYSCALL(uptime)
 SYSCALL(myalloc)
 SYSCALL(myfree)
+SYSCALL(clone)
+SYSCALL(join)
 
