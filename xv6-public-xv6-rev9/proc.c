@@ -544,48 +544,50 @@ int myreduceproc(int start){
   return -1;
 }
 
-int clone(void (*fcn)(void*),void* arg, void* stack)
+// malloc space for new stack then pass to clone
+int clone(void(*fcn)(void*), void* arg, void* stack)
 {
-  cprintf("in clone, stack start addr = %p\n",stack);
-  struct proc *curproc = proc;  //record the process calling for clone
+//  cprintf("in clone, stack start addr = %p\n", stack);
+  struct proc *curproc = proc;  // 调用 clone 的进程
   struct proc *np;
-  if((np = allocproc()) == 0){
-    return -1;
-  }
 
-  np->pgdir = curproc->pgdir;
-  np->sz = curproc->sz;
-  np->pthread = curproc;
-
-  np->ustack = stack;
-  np->parent = 0;
-  *np->tf = *curproc->tf;
+  // allocate a PCB
+  if((np = allocproc()) == 0)
+   return -1; 
   
-  int *sp = stack + 4096 - 8;
+  // For clone, don't need to copy entire address space like fork
+  np->pgdir = curproc->pgdir;  // 线程间公用页表
+  np->sz = curproc->sz;
+  np->pthread = curproc;       // exit 时唤醒用
+  np->parent = 0;
+  *np->tf = *curproc->tf;      // 继承 trapframe
 
+  int* sp = stack + 4096 - 8;
+
+  // Clone may need to change other registers than ones seen in fork
   np->tf->eip = (int)fcn;
-  np->tf->esp = (int)sp;
-  np->tf->ebp = (int)sp;
-  np->tf->eax = 0;
+  np->tf->esp = (int)sp;  // top of stack
+  np->tf->ebp = (int)sp;  // 栈帧指针 
+  np->tf->eax = 0;    // Clear %eax so that clone returns 0 in the child
 
-  *(sp + 1)=(int)arg;
-  *sp = 0xffffffff;
+  // setup new user stack and some pointers
+  *(sp + 1) = (int)arg; // *(np->tf->esp+4) = (int)arg
+  *sp = 0xffffffff;     // end of stack (fake return PC value)
 
-  for (int i = 0; i < NOFILE; ++i)
-  {
-    if(curproc->ofile[i]){
+  for(int i = 0; i < NOFILE; i++)
+    if(curproc->ofile[i])
       np->ofile[i] = filedup(curproc->ofile[i]);
-    }
-  }
   np->cwd = idup(curproc->cwd);
 
-  safestrcpy(np->name,curproc->name,sizeof(curproc->name));
+  safestrcpy(np->name, curproc->name, sizeof(curproc->name));
+  
   int pid = np->pid;
-
+  
   acquire(&ptable.lock);
   np->state = RUNNABLE;
   release(&ptable.lock);
-
+ 
+  // return the ID of the new thread
   return pid;
 }
 
@@ -593,6 +595,7 @@ int
 join(void **stack)
 {
   cprintf("in join, stack pointer = %p\n",*stack);
+  struct proc *curproc = proc;
   struct proc *p;
   int havekids;
 
@@ -600,38 +603,37 @@ join(void **stack)
   for(;;){
     // Scan through table looking for zombie children.
     havekids = 0;
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; ++p){
-      if(p->parent != proc)
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->pthread != curproc)
         continue;
       havekids = 1;
       if(p->state == ZOMBIE){
         // Found one.
-        *stack = p->ustack;
+        // *stack = p->ustack;
         int pid = p->pid;
         kfree(p->kstack);
         p->kstack = 0;
+        p->state = UNUSED;
         p->pid = 0;
         p->parent = 0;
         p->pthread = 0;
-        p->ustack = 0;
         p->name[0] = 0;
         p->killed = 0;
-        p->state = UNUSED;
         release(&ptable.lock);
         return pid;
       }
     }
 
     // No point waiting if we don't have any children.
-    if(!havekids || proc->killed){
+    if(!havekids || curproc->killed){
       release(&ptable.lock);
       return -1;
     }
 
     // Wait for children to exit.  (See wakeup1 call in proc_exit.)
-    sleep(proc, &ptable.lock);  //DOC: wait-sleep
+    sleep(curproc, &ptable.lock);  //DOC: wait-sleep
   }
 
-  // return 0;
+  return 0;
 }
 
