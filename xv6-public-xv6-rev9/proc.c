@@ -19,7 +19,7 @@ int nextpid = 1;
 extern void forkret(void);
 extern void trapret(void);
 
-static void wakeup1(void *chan);
+static void wakeup1(void *chan, int lockCpuIndex);
 
 
 
@@ -28,10 +28,15 @@ int getcpuid()
 {
   return cpunum();
 }
+
 void
 pinit(void)
 {
-  initlock(&ptable[0].lock, "ptable[0]");
+  int i;
+  for(i = 0; i<CPUNUMBER; ++i){
+    ptable[i].amount = 0;
+    initlock(&ptable[i].lock, "ptable[i]");
+  }
 }
 
 //choose the suitable ptable
@@ -55,11 +60,11 @@ static int getPtableIndex(){
 // Otherwise return 0.
 // Must hold ptable[0].lock.
 static struct proc*
-allocproc(void)
+allocproc(int ptableIndex)
 {
   struct proc *p;
   char *sp;
-  int ptableIndex = getPtableIndex();
+  
 
   for(p = ptable[ptableIndex].proc; p < &ptable[ptableIndex].proc[NPROC]; p++)
     if(p->state == UNUSED)
@@ -97,6 +102,8 @@ found:
   p->context = (struct context*)sp;
   memset(p->context, 0, sizeof *p->context);
   p->context->eip = (uint)forkret;
+  p->cpuid = ptableIndex;
+  ptable[ptableIndex].amount += 1;
 
   return p;
 }
@@ -108,10 +115,11 @@ userinit(void)
 {
   struct proc *p;
   extern char _binary_initcode_start[], _binary_initcode_size[];
+  int ptableIndex = getPtableIndex();
 
-  acquire(&ptable[0].lock);
+  acquire(&ptable[ptableIndex].lock);
 
-  p = allocproc();
+  p = allocproc(ptableIndex);
   initproc = p;
   if((p->pgdir = setupkvm()) == 0)
     panic("userinit: out of memory?");
@@ -131,14 +139,7 @@ userinit(void)
 
   p->state = RUNNABLE;
 
-  release(&ptable[0].lock);
-}
-
-void ptableinit(void){
-  int i;
-  for(i = 0; i<CPUNUMBER; ++i){
-    ptable[i].amount = 0;
-  }
+  release(&ptable[ptableIndex].lock);
 }
 
 // Grow current process's memory by n bytes.
@@ -169,12 +170,13 @@ fork(void)
 {
   int i, pid;
   struct proc *np;
+  int ptableIndex = getPtableIndex();
 
-  acquire(&ptable[0].lock);
+  acquire(&ptable[ptableIndex].lock);
 
   // Allocate process.
-  if((np = allocproc()) == 0){
-    release(&ptable[0].lock);
+  if((np = allocproc(ptableIndex)) == 0){
+    release(&ptable[ptableIndex].lock);
     return -1;
   }
 
@@ -183,7 +185,7 @@ fork(void)
     kfree(np->kstack);
     np->kstack = 0;
     np->state = UNUSED;
-    release(&ptable[0].lock);
+    release(&ptable[ptableIndex].lock);
     return -1;
   }
   np->sz = proc->sz;
@@ -204,7 +206,7 @@ fork(void)
 
   np->state = RUNNABLE;
 
-  release(&ptable[0].lock);
+  release(&ptable[ptableIndex].lock);
 
   return pid;
 }
@@ -217,9 +219,12 @@ exit(void)
 {
   struct proc *p;
   int fd;
-
+  int i,needWakeinit = 0;
+  
   if(proc == initproc)
     panic("init exiting");
+
+  int cpuid = proc->cpuid;
 
   // Close all open files.
   for(fd = 0; fd < NOFILE; fd++){
@@ -234,23 +239,62 @@ exit(void)
   end_op();
   proc->cwd = 0;
 
-  acquire(&ptable[0].lock);
 
-  // Parent might be sleeping in wait().
-  if(proc->parent == 0 && proc -> pthread!=0){
-    wakeup1(proc->pthread);
-  }else{
-    wakeup1(proc->parent);
-  }
-
-  // Pass abandoned children to init.
-  for(p = ptable[0].proc; p < &ptable[0].proc[NPROC]; p++){
-    if(p->parent == proc){
-      p->parent = initproc;
-      if(p->state == ZOMBIE)
-        wakeup1(initproc);
+  for(i = 0;i < CPUNUMBER; ++i){
+    acquire(&ptable[i].lock);
+    for(p = ptable[i].proc; p < &ptable[i].proc[NPROC]; p++){
+      if(p->chan == proc->parent && p->state == SLEEPING ){
+        p->state = RUNNABLE;
+      }else if(p->chan == proc->pthread && p->state == SLEEPING ){
+        p->state = RUNNABLE;
+      }else if(p->parent == proc){
+        p->parent = initproc;
+        if(p->state == ZOMBIE){
+          needWakeinit = 1;
+        }
+      }
     }
+    release(&ptable[i].lock);
   }
+
+  if(needWakeinit)wakeup(initproc);
+
+
+  acquire(&ptable[cpuid].lock);
+
+  // // Parent might be sleeping in wait().
+  // if(proc->parent == 0 && proc -> pthread!=0){
+  //   wakeup1(proc->pthread,cpuid);
+  //   for(i = 0;i < CPUNUMBER;++i){
+  //     if(i != cpuid){
+  //       acquire(&ptable[i].lock);
+  //       wakeup1(proc->pthread,i);
+  //       release(&ptable[i].lock);
+  //     }
+  //   }
+  // }else{
+  //   wakeup1(proc->parent,cpuid);
+  //   for(i = 0;i < CPUNUMBER;++i){
+  //     if(i != cpuid){
+  //       acquire(&ptable[i].lock);
+  //       wakeup1(proc->parent,i);
+  //       release(&ptable[i].lock);
+  //     }
+  //   }
+  // }
+
+  // // Pass abandoned children to init.
+  // for(i = 0;i<CPUNUMBER;++i){
+  //   if(i != cpuid)acquire(&ptable[i].lock);
+  //   for(p = ptable[cpuid].proc; p < &ptable[cpuid].proc[NPROC]; p++){
+  //     if(p->parent == proc){
+  //       p->parent = initproc;
+  //       if(p->state == ZOMBIE)
+  //         wakeup1(initproc);
+  //     }
+  //   }
+  //   if(i != cpuid)release(&ptable[i].lock);
+  // }
 
   // Jump into the scheduler, never to return.
   proc->state = ZOMBIE;
@@ -355,8 +399,8 @@ sched(void)
 {
   int intena;
 
-  if(!holding(&ptable[0].lock))
-    panic("sched ptable[0].lock");
+  if(!holding(&ptable[proc->cpuid].lock))
+    panic("sched ptable.lock");
   if(cpu->ncli != 1)
     panic("sched locks");
   if(proc->state == RUNNING)
@@ -372,10 +416,10 @@ sched(void)
 void
 yield(void)
 {
-  acquire(&ptable[0].lock);  //DOC: yieldlock
+  acquire(&ptable[proc->cpuid].lock);  //DOC: yieldlock
   proc->state = RUNNABLE;
   sched();
-  release(&ptable[0].lock);
+  release(&ptable[proc->cpuid].lock);
 }
 
 // A fork child's very first scheduling by scheduler()
@@ -416,8 +460,8 @@ sleep(void *chan, struct spinlock *lk)
   // guaranteed that we won't miss any wakeup
   // (wakeup runs with ptable[0].lock locked),
   // so it's okay to release lk.
-  if(lk != &ptable[0].lock){  //DOC: sleeplock0
-    acquire(&ptable[0].lock);  //DOC: sleeplock1
+  if(lk != &ptable[proc->cpuid].lock){  //DOC: sleeplock0
+    acquire(&ptable[proc->cpuid].lock);  //DOC: sleeplock1
     release(lk);
   }
 
@@ -430,21 +474,20 @@ sleep(void *chan, struct spinlock *lk)
   proc->chan = 0;
 
   // Reacquire original lock.
-  if(lk != &ptable[0].lock){  //DOC: sleeplock2
-    release(&ptable[0].lock);
+  if(lk != &ptable[proc->cpuid].lock){  //DOC: sleeplock2
+    release(&ptable[proc->cpuid].lock);
     acquire(lk);
   }
 }
 
 //PAGEBREAK!
 // Wake up all processes sleeping on chan.
-// The ptable[0] lock must be held.
+// The ptable[ptableIndex] lock must be held.
 static void
-wakeup1(void *chan)
+wakeup1(void *chan, int ptableIndex)
 {
   struct proc *p;
-
-  for(p = ptable[0].proc; p < &ptable[0].proc[NPROC]; p++)
+  for(p = ptable[ptableIndex].proc; p < &ptable[ptableIndex].proc[NPROC]; p++)
     if(p->state == SLEEPING && p->chan == chan)
       p->state = RUNNABLE;
 }
@@ -453,9 +496,15 @@ wakeup1(void *chan)
 void
 wakeup(void *chan)
 {
-  acquire(&ptable[0].lock);
-  wakeup1(chan);
-  release(&ptable[0].lock);
+  int i;
+  struct proc *p;
+  for(i = 0;i<CPUNUMBER;++i){
+    acquire(&ptable[i].lock);
+    for(p = ptable[i].proc; p < &ptable[i].proc[NPROC]; p++)
+      if(p->state == SLEEPING && p->chan == chan)
+        p->state = RUNNABLE;
+    release(&ptable[i].lock);
+  }
 }
 
 // Kill the process with the given pid.
