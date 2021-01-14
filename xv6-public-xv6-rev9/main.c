@@ -55,7 +55,7 @@ static void
 mpmain(void)
 {
   int cpuid = cpunum();
-  cprintf("cpu%d: starting\n", cpuid);
+  cprintf("cpu%d apicid = %d: starting\n", cpuid,cpu->apicid);
   idtinit();       // load idt register
   xchg(&cpu->started, 1); // tell startothers() we're up
   scheduler(cpuid);     // start running processes
