@@ -27,8 +27,10 @@ int main(){
     int t = 1;
     open("tmp", O_RDWR | O_CREATE);
     int pid = thread_create(worker, &t);
-    thread_join();
-    printf(1, "thread id = %d\n", pid);
-    printf(1, "global = %d\n", global);
+    if(pid != -1){
+        thread_join();
+        printf(1, "thread id = %d\n", pid);
+        printf(1, "global = %d\n", global);
+    }
     exit(); 
 }

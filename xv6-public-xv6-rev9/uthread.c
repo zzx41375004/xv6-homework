@@ -8,19 +8,7 @@ struct
     int pid;
     void *ustack;
     int used;
-}threads[NTHREAD];
-
-void add_thread(int* pid, void* ustack){
-    for (int i = 0; i < NTHREAD; ++i)
-    {
-        if(threads[i].used == 0){
-            threads[i].pid = *pid;
-            threads[i].ustack = ustack;
-            threads[i].used = 1;
-            break;
-        }
-    }
-}
+}threads[NTHREAD] = {0};
 
 void remove_thread(int* pid){
     for (int i = 0; i < NTHREAD; ++i)
@@ -35,20 +23,32 @@ void remove_thread(int* pid){
     }
 }
 
-int thread_create(void(*start_routine)(void*), void *arg){
-    static int first = 1;
-    if(first){
-        first = 0;
-        for (int i = 0; i < NTHREAD; ++i)
-        {
-            threads[i].pid = 0;
-            threads[i].ustack = 0;
-            threads[i].used = 0;
+int findPos(){
+    for (int i = 0; i < NTHREAD; ++i)
+    {
+        if(threads[i].used == 0){
+            return i;
         }
+    }
+    return -1;
+}
+
+int thread_create(void(*start_routine)(void*), void *arg){
+    int pos = findPos();
+    if(pos == -1){
+        printf(1,"Create thread failed! Perhaps because there are too many threads!\n");
+        return -1;
     }
     void *stack = malloc(PGSIZE);
     int pid = clone(start_routine, arg, stack);
-    add_thread(&pid,stack);
+    if(pid == -1){
+        printf(1,"clone failed!\n");
+        free(stack);
+    }else{
+        threads[pos].pid = pid;
+        threads[pos].ustack = stack;
+        threads[pos].used = 1; 
+    }
     return pid;
 }
 
