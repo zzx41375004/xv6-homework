@@ -11,5 +11,5 @@
 #define LOGSIZE      (MAXOPBLOCKS*3)  // max data blocks in on-disk log
 #define NBUF         (MAXOPBLOCKS*3)  // size of disk block cache
 #define FSSIZE       1000  // size of file system in blocks
-#define MAXSONS      16    //
+#define MAXSON        8    //子进程的最大数量
 

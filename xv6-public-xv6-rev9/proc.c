@@ -54,6 +54,10 @@ found:
   p->state = EMBRYO;
   p->pid = nextpid++;
   p->priority = 10;
+  p->numberOfSon = 0;
+  for(int i = 0; i < MAXSON; ++i){
+    p->son[i] = 0;
+  }
 
   for (int i = 0; i < 10; ++i)
   {
@@ -114,6 +118,7 @@ userinit(void)
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");
 
+  p->cpuID = 0;   //init进程在0号cpu上运行
   p->state = RUNNABLE;
 
   release(&ptable.lock);
@@ -137,6 +142,22 @@ growproc(int n)
   proc->sz = sz;
   switchuvm(proc);
   return 0;
+}
+
+static int add_son(struct proc *parent, struct proc *son)
+{
+  int ret = 0;
+  if(parent->numberOfSon >= MAXSON){
+    return -1;
+  }
+  for (int i = 0; i < MAXSON; ++i){
+    if (parent->son[i] == 0){
+      parent->son[i] = son;
+      parent->numberOfSon++;
+      break;
+    }
+  }
+  return ret;
 }
 
 // Create a new process copying p as the parent.
@@ -166,6 +187,12 @@ fork(void)
   }
   np->sz = proc->sz;
   np->parent = proc;
+  if(add_son(proc,np)){
+    cprintf("fork: the number of sons is too much\n");
+    release(&ptable.lock);
+    return -1;
+  }
+
   *np->tf = *proc->tf;
 
   // Clear %eax so that fork returns 0 in the child.
@@ -185,6 +212,18 @@ fork(void)
   release(&ptable.lock);
 
   return pid;
+}
+
+static int remove_son(struct proc *parent,struct proc *son){
+  int ret = -1;
+  for(int i=0;i<MAXSON;++i){
+    if(parent->son[i] == son){
+      parent->son[i] = 0;
+      parent->numberOfSon--;
+      return 0;
+    }
+  }
+  return ret;
 }
 
 // Exit the current process.  Does not return.
@@ -218,6 +257,9 @@ exit(void)
   if(proc->parent == 0 && proc -> pthread!=0){
     wakeup1(proc->pthread);
   }else{
+    if (remove_son(proc->parent, proc)){
+      cprintf("exit: son(%s) doesn't exist in parent(%s)\n", proc->name, proc->parent->name);
+    }
     wakeup1(proc->parent);
   }
 
@@ -225,6 +267,9 @@ exit(void)
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->parent == proc){
       p->parent = initproc;
+      if (add_son(initproc, p)){
+        cprintf("fork: the number of sons is too much\n");
+      }
       if(p->state == ZOMBIE)
         wakeup1(initproc);
     }
@@ -263,6 +308,10 @@ wait(void)
         p->name[0] = 0;
         p->killed = 0;
         p->state = UNUSED;
+        p->numberOfSon = 0;
+        for(int i = 0; i < MAXSON ; ++i){
+          p->son[i] = 0;
+        }
         release(&ptable.lock);
         return pid;
       }
@@ -288,7 +337,7 @@ wait(void)
 //  - eventually that process transfers control
 //      via swtch back to the scheduler.
 void
-scheduler(void)
+scheduler(int cpuID)
 {
   struct proc *p;
 
@@ -298,6 +347,7 @@ scheduler(void)
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
+    // cprintf("acquire: cpuID = \n",cpuID);
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
         continue;
@@ -308,6 +358,8 @@ scheduler(void)
       proc = p;
       switchuvm(p);
       p->state = RUNNING;
+      cprintf("acquire: cpuID = \n",cpuID);
+      p->cpuID = cpuID;
       swtch(&cpu->scheduler, p->context);
       switchkvm();
 
@@ -485,7 +537,18 @@ procdump(void)
       state = states[p->state];
     else
       state = "???";
-    cprintf("\npid:%d, state: %s, name: %s, priority = %d\n", p->pid, state, p->name, p->priority);
+    cprintf("\npid:%d, state: %s, name: %s, priority = %d, numOfSon is %d, cpuID = %d\n", p->pid, state, p->name, p->priority,p->numberOfSon,p->cpuID);
+    // if(p->numberOfSon&&p!=initproc){
+    //   cprintf("sons list : ");
+    //   for(i = 0; i < MAXSON; ++i){
+    //     if(proc->son[i] != 0){
+    //       cprintf("%d\t",p->son[i]->pid);
+
+    //     }
+    //   }
+    //   cprintf("\n");
+    // }
+    
     for(int i = p->vm[0].next; i!=0; i=p->vm[i].next){
       cprintf("start: %d, length: %d\n",p->vm[i].start,p->vm[i].length);
     }
@@ -548,7 +611,7 @@ int myreduceproc(int start){
 // malloc space for new stack then pass to clone
 int clone(void(*fcn)(void*), void* arg, void* stack)
 {
-//  cprintf("in clone, stack start addr = %p\n", stack);
+   cprintf("in clone, stack start addr = %p\n", stack);
   struct proc *curproc = proc;  // 调用 clone 的进程
   struct proc *np;
 
@@ -567,13 +630,13 @@ int clone(void(*fcn)(void*), void* arg, void* stack)
 
   // Clone may need to change other registers than ones seen in fork
   np->tf->eip = (int)fcn;
-  np->tf->esp = (int)sp;  // top of stack
-  np->tf->ebp = (int)sp;  // 栈帧指针 
-  np->tf->eax = 0;    // Clear %eax so that clone returns 0 in the child
+  np->tf->esp = (int)sp; 
+  np->tf->ebp = (int)sp; 
+  np->tf->eax = 0; 
 
   // setup new user stack and some pointers
   *(sp + 1) = (int)arg; // *(np->tf->esp+4) = (int)arg
-  *sp = 0xffffffff;     // end of stack (fake return PC value)
+  *sp = 0xffffffff; 
 
   for(int i = 0; i < NOFILE; i++)
     if(curproc->ofile[i])
@@ -643,18 +706,18 @@ int cps(void)
   struct proc *p;
   sti(); // Enable interrupts
   acquire(&ptable.lock);
-  cprintf("name \t pid \t state \t \t priority \n");
+  cprintf("name\tpid\tstate\t\tpriority\n");
   for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
   {
     if (p->state == SLEEPING)
       cprintf("%s\t%d\tSLEEPING\t%d\n", p->name, p->pid, p->priority);
     else if (p->state == RUNNING)
-      cprintf("%s\t%d\tRUNNING\t%d\n", p->name, p->pid, p->priority);
+      cprintf("%s\t%d\tRUNNING\t\t%d\n", p->name, p->pid, p->priority);
     else if (p->state == RUNNABLE)
       cprintf("%s\t%d\tRUNNABLE\t%d\n", p->name, p->pid, p->priority);
   }
   release(&ptable.lock);
-  return 28;
+  return 0;
 }
 
 int chpri(int pid, int priority)

@@ -8,5 +8,6 @@ int main(int argc, char *argv[])
         printf(1, "Usage: ps\n");
     else
         cps();
+    sleep(5000);
     exit();
 }

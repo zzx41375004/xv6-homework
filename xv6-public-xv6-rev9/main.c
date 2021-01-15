@@ -54,10 +54,11 @@ mpenter(void)
 static void
 mpmain(void)
 {
-  cprintf("cpu%d: starting\n", cpunum());
+  int cpuID = cpunum();
+  cprintf("cpu%d: starting\n", cpuID);
   idtinit();       // load idt register
   xchg(&cpu->started, 1); // tell startothers() we're up
-  scheduler();     // start running processes
+  scheduler(cpuID);     // start running processes
 }
 
 pde_t entrypgdir[];  // For entry.S
