@@ -24,9 +24,13 @@ initlock(struct spinlock *lk, char *name)
 void
 acquire(struct spinlock *lk)
 {
+  
   pushcli(); // disable interrupts to avoid deadlock.
-  if(holding(lk))
+  if(holding(lk)){
+    cprintf("acquire wrong: cpuid = %d\n",proc->cpuid);
     panic("acquire");
+  }
+  // cprintf("acquire: cpuid = %d\n", lk->cpu->apicid);
 
   // The xchg is atomic.
   while(xchg(&lk->locked, 1) != 0)
@@ -46,8 +50,10 @@ acquire(struct spinlock *lk)
 void
 release(struct spinlock *lk)
 {
+  
   if(!holding(lk))
     panic("release");
+  // cprintf("release: cpuid = %d\n", lk->cpu->apicid);
 
   lk->pcs[0] = 0;
   lk->cpu = 0;
