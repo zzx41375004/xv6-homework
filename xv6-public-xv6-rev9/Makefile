@@ -178,6 +178,7 @@ UPROGS=\
 	_test-thread\
 	_ps\
 	_test-prio_sched\
+	_prio-sched\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)

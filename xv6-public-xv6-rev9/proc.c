@@ -336,39 +336,45 @@ wait(void)
 //  - swtch to start running that process
 //  - eventually that process transfers control
 //      via swtch back to the scheduler.
-void
-scheduler(int cpuID)
+void scheduler(int cpuID)
 {
   struct proc *p;
+  int proc_num, last_proc_num, prio;
+  last_proc_num = 0;
 
-  for(;;){
+  for (;;)
+  {
     // Enable interrupts on this processor.
     sti();
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    // cprintf("acquire: cpuID = \n",cpuID);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
-        continue;
+    for (prio = 0; prio < 20; prio++)
+    {
+      for (proc_num = 0; proc_num < NPROC; proc_num++)
+      {
+        p = ptable.proc + ((last_proc_num + 1 + proc_num) % NPROC);
+        if (p->state != RUNNABLE)
+          continue;
+        if (p->priority != prio)
+          continue;
+        last_proc_num = (last_proc_num + 1 + proc_num) % NPROC;
+        // Switch to chosen process.  It is the process's job
+        // to release ptable.lock and then reacquire it
+        // before jumping back to us.
+        proc = p;
+        switchuvm(p);
+        p->state = RUNNING;
+        p->cpuID = cpuID;
+        swtch(&cpu->scheduler, p->context);
+        switchkvm();
 
-      // Switch to chosen process.  It is the process's job
-      // to release ptable.lock and then reacquire it
-      // before jumping back to us.
-      proc = p;
-      switchuvm(p);
-      p->state = RUNNING;
-      cprintf("acquire: cpuID = \n",cpuID);
-      p->cpuID = cpuID;
-      swtch(&cpu->scheduler, p->context);
-      switchkvm();
-
-      // Process is done running for now.
-      // It should have changed its p->state before coming back.
-      proc = 0;
+        // Process is done running for now.
+        // It should have changed its p->state before coming back.
+        proc = 0;
+      }
     }
     release(&ptable.lock);
-
   }
 }
 
@@ -715,6 +721,8 @@ int cps(void)
       cprintf("%s\t%d\tRUNNING\t\t%d\n", p->name, p->pid, p->priority);
     else if (p->state == RUNNABLE)
       cprintf("%s\t%d\tRUNNABLE\t%d\n", p->name, p->pid, p->priority);
+    else if (p->state == ZOMBIE)
+      cprintf("%s\t%d\tZOMBIE\t%d\n", p->name, p->pid, p->priority);
   }
   release(&ptable.lock);
   return 0;
