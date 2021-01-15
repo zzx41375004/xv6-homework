@@ -11,4 +11,6 @@ int sys_myalloc(void);
 int sys_myfree(void);
 int sys_clone(void);
 int sys_join(void);
+int sys_cps(void);
+int sys_chpri(void);
 

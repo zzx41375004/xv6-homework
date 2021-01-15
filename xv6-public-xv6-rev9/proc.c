@@ -53,6 +53,7 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  p->priority = 10;
 
   for (int i = 0; i < 10; ++i)
   {
@@ -484,7 +485,7 @@ procdump(void)
       state = states[p->state];
     else
       state = "???";
-    cprintf("\npid:%d, state: %s, name: %s\n", p->pid, state, p->name);
+    cprintf("\npid:%d, state: %s, name: %s, priority = %d\n", p->pid, state, p->name, p->priority);
     for(int i = p->vm[0].next; i!=0; i=p->vm[i].next){
       cprintf("start: %d, length: %d\n",p->vm[i].start,p->vm[i].length);
     }
@@ -637,3 +638,37 @@ join(void **stack)
   return 0;
 }
 
+int cps(void)
+{
+  struct proc *p;
+  sti(); // Enable interrupts
+  acquire(&ptable.lock);
+  cprintf("name \t pid \t state \t \t priority \n");
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    if (p->state == SLEEPING)
+      cprintf("%s\t%d\tSLEEPING\t%d\n", p->name, p->pid, p->priority);
+    else if (p->state == RUNNING)
+      cprintf("%s\t%d\tRUNNING\t%d\n", p->name, p->pid, p->priority);
+    else if (p->state == RUNNABLE)
+      cprintf("%s\t%d\tRUNNABLE\t%d\n", p->name, p->pid, p->priority);
+  }
+  release(&ptable.lock);
+  return 28;
+}
+
+int chpri(int pid, int priority)
+{
+  struct proc *p;
+  acquire(&ptable.lock);
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  {
+    if (p->pid == pid)
+    {
+      p->priority = priority;
+      break;
+    }
+  }
+  release(&ptable.lock);
+  return pid;
+}

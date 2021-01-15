@@ -120,6 +120,8 @@ void            yield(void);
 int             getcpuid(void);
 int 			clone(void (*fcn)(void*),void*, void*);
 int 			join(void**);
+int             cps(void);
+int             chpri(int,int);
 
 // swtch.S
 void            swtch(struct context**, struct context*);

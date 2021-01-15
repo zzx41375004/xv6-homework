@@ -34,4 +34,6 @@ SYSCALL(myalloc)
 SYSCALL(myfree)
 SYSCALL(clone)
 SYSCALL(join)
+SYSCALL(cps)
+SYSCALL(chpri)
 

@@ -28,6 +28,8 @@ char* myalloc(int);
 int myfree(void*);
 int clone(void (*fcn)(void*),void* arg, void* stack);
 int join(void**);
+int cps(void);
+int chpri(int,int);
 
 // ulib.c
 int stat(char*, struct stat*);

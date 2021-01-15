@@ -63,6 +63,7 @@ struct proc {
   enum procstate state;        // Process state
   int pid;                     // Process ID
   struct proc *parent;         // Parent process
+  struct proc *son[MAXSONPROCESS];
   struct trapframe *tf;        // Trap frame for current syscall
   struct context *context;     // swtch() here to run process
   void *chan;                  // If non-zero, sleeping on chan
@@ -73,6 +74,7 @@ struct proc {
   struct vma vm[10];
   struct proc *pthread;
   void *ustack; 
+  int priority; 
 };
 
 // Process memory is laid out contiguously, low addresses first:

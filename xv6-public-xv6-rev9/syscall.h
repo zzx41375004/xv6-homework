@@ -25,3 +25,5 @@
 #define	SYS_myfree	24
 #define SYS_clone	25
 #define SYS_join	26
+#define SYS_cps 	27
+#define SYS_chpri   28

@@ -107,6 +107,8 @@ static int (*syscalls[])(void) = {
 [SYS_myfree]    sys_myfree,
 [SYS_clone]     sys_clone,
 [SYS_join]      sys_join,
+[SYS_cps]       sys_cps,
+[SYS_chpri]     sys_chpri,
 };
 
 void
