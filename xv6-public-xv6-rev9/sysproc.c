@@ -22,7 +22,6 @@ sys_clone(void)
      return -1;
  
   return clone((void *)func_add, (void *)arg, (void *)stack_add);
-  
 }
 
 int 

@@ -54,11 +54,14 @@ found:
   p->state = EMBRYO;
   p->pid = nextpid++;
   p->priority = 10;
-  p->numberOfSon = 0;
+  p->numofchild = 0;
+  p->numofthreads = 0;
   for(int i = 0; i < MAXSON; ++i){
     p->son[i] = 0;
   }
-
+  for(int i = 0; i<MAXTHREADS; ++i){
+    p->cthread[i] = 0;
+  }
   for (int i = 0; i < 10; ++i)
   {
     p->vm[i].next = -1;
@@ -147,13 +150,13 @@ growproc(int n)
 static int add_son(struct proc *parent, struct proc *son)
 {
   int ret = 0;
-  if(parent->numberOfSon >= MAXSON){
+  if(parent->numofchild >= MAXSON){
     return -1;
   }
   for (int i = 0; i < MAXSON; ++i){
     if (parent->son[i] == 0){
       parent->son[i] = son;
-      parent->numberOfSon++;
+      parent->numofchild++;
       break;
     }
   }
@@ -177,6 +180,13 @@ fork(void)
     return -1;
   }
 
+  if (add_son(proc, np))
+  {
+    cprintf("fork: the number of sons is too much\n");
+    release(&ptable.lock);
+    return -1;
+  }
+
   // Copy process state from p.
   if((np->pgdir = copyuvm(proc->pgdir, proc->sz)) == 0){
     kfree(np->kstack);
@@ -187,11 +197,7 @@ fork(void)
   }
   np->sz = proc->sz;
   np->parent = proc;
-  if(add_son(proc,np)){
-    cprintf("fork: the number of sons is too much\n");
-    release(&ptable.lock);
-    return -1;
-  }
+
 
   *np->tf = *proc->tf;
 
@@ -219,7 +225,7 @@ static int remove_son(struct proc *parent,struct proc *son){
   for(int i=0;i<MAXSON;++i){
     if(parent->son[i] == son){
       parent->son[i] = 0;
-      parent->numberOfSon--;
+      parent->numofchild--;
       return 0;
     }
   }
@@ -256,6 +262,13 @@ exit(void)
   // Parent might be sleeping in wait().
   if(proc->parent == 0 && proc -> pthread!=0){
     wakeup1(proc->pthread);
+    proc->pthread->numofthreads--;
+    for(int i = 0; i<MAXTHREADS; ++i){
+      if(proc->pthread->cthread[i] == proc){
+        proc->pthread->cthread[i] = 0;
+        break;
+      }
+    }
   }else{
     if (remove_son(proc->parent, proc)){
       cprintf("exit: son(%s) doesn't exist in parent(%s)\n", proc->name, proc->parent->name);
@@ -263,12 +276,27 @@ exit(void)
     wakeup1(proc->parent);
   }
 
+  // if(proc->numofchild!= 0){
+  //   for (int i = 0; i < MAXSON; ++i)
+  //   {
+  //     if(proc->son[i]!=0){
+  //       proc->son[i]->parent = initproc;
+  //       if (add_son(initproc, proc->son[i]))
+  //       {
+  //         cprintf("initproc: the number of sons is too much\n");
+  //       }
+  //       if(proc->son[i]->state == ZOMBIE)
+  //         wakeup1(initproc);
+  //     }
+  //   }
+  // }
+
   // Pass abandoned children to init.
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->parent == proc){
       p->parent = initproc;
       if (add_son(initproc, p)){
-        cprintf("fork: the number of sons is too much\n");
+        cprintf("initproc: the number of sons is too much\n");
       }
       if(p->state == ZOMBIE)
         wakeup1(initproc);
@@ -308,7 +336,7 @@ wait(void)
         p->name[0] = 0;
         p->killed = 0;
         p->state = UNUSED;
-        p->numberOfSon = 0;
+        p->numofchild = 0;
         for(int i = 0; i < MAXSON ; ++i){
           p->son[i] = 0;
         }
@@ -543,17 +571,27 @@ procdump(void)
       state = states[p->state];
     else
       state = "???";
-    cprintf("\npid:%d, state: %s, name: %s, priority = %d, numOfSon is %d, cpuID = %d\n", p->pid, state, p->name, p->priority,p->numberOfSon,p->cpuID);
-    // if(p->numberOfSon&&p!=initproc){
-    //   cprintf("sons list : ");
-    //   for(i = 0; i < MAXSON; ++i){
-    //     if(proc->son[i] != 0){
-    //       cprintf("%d\t",p->son[i]->pid);
-
-    //     }
-    //   }
-    //   cprintf("\n");
-    // }
+    cprintf("\npid:%d, state: %s, name: %s, priority = %d, cpuID = %d\n", p->pid, state, p->name, p->priority,p->cpuID);
+    if(p->numofchild){
+      cprintf("共%d个子进程: ", p->numofchild);
+      for(i = 0; i < MAXSON; ++i){
+        if(p->son[i] != 0){
+          cprintf("%d:%s\t",p->son[i]->pid,p->son[i]->name);
+        }
+      }
+      cprintf("\n");
+    }
+    if(p->numofthreads){
+      cprintf("共%d个子线程: ", p->numofthreads);
+      for (i = 0; i < MAXSON; ++i)
+      {
+        if (p->cthread[i] != 0)
+        {
+          cprintf("%d:%s\t", p->cthread[i]->pid, p->cthread[i]->name);
+        }
+      }
+      cprintf("\n");
+    }
     
     for(int i = p->vm[0].next; i!=0; i=p->vm[i].next){
       cprintf("start: %d, length: %d\n",p->vm[i].start,p->vm[i].length);
@@ -624,12 +662,25 @@ int clone(void(*fcn)(void*), void* arg, void* stack)
   // allocate a PCB
   if((np = allocproc()) == 0)
    return -1; 
+
+  if(proc->numofthreads >= MAXTHREADS){
+    cprintf("clone: the number of threads is too many!\n");
+    return -1;
+  }
   
   // For clone, don't need to copy entire address space like fork
   np->pgdir = curproc->pgdir;  // 线程间公用页表
   np->sz = curproc->sz;
   np->pthread = curproc;       // exit 时唤醒用
   np->parent = 0;
+  proc->numofthreads++;
+  for(int i=0;i<MAXTHREADS;++i){
+    if(proc->cthread[i] == 0){
+      proc->cthread[i] = np;
+      break;
+    }
+  }
+
   *np->tf = *curproc->tf;      // 继承 trapframe
 
   int* sp = stack + 4096 - 8;

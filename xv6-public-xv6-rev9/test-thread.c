@@ -20,6 +20,7 @@ void worker(void* arg){
     global = F(15);
     // printf(1, "global = %d\n", global);
     write(3,"hello\n",6);
+    sleep(1000);
     exit();
 }
 

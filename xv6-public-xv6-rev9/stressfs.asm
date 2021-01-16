@@ -39,7 +39,7 @@ main(int argc, char *argv[])
   2b:	c7 85 de fd ff ff 73 	movl   $0x65727473,-0x222(%ebp)
   32:	74 72 65 
   printf(1, "stressfs starting\n");
-  35:	68 70 0a 00 00       	push   $0xa70
+  35:	68 60 0a 00 00       	push   $0xa60
   3a:	6a 01                	push   $0x1
   char path[] = "stressfs0";
   3c:	c7 85 e2 fd ff ff 73 	movl   $0x73667373,-0x21e(%ebp)
@@ -67,7 +67,7 @@ main(int argc, char *argv[])
   printf(1, "write %d\n", i);
   78:	83 ec 04             	sub    $0x4,%esp
   7b:	53                   	push   %ebx
-  7c:	68 83 0a 00 00       	push   $0xa83
+  7c:	68 73 0a 00 00       	push   $0xa73
 
   path[8] += i;
   fd = open(path, O_CREATE | O_RDWR);
@@ -108,7 +108,7 @@ main(int argc, char *argv[])
   printf(1, "read\n");
   d0:	58                   	pop    %eax
   d1:	5a                   	pop    %edx
-  d2:	68 8d 0a 00 00       	push   $0xa8d
+  d2:	68 7d 0a 00 00       	push   $0xa7d
   d7:	6a 01                	push   $0x1
   d9:	e8 32 04 00 00       	call   510 <printf>
 
@@ -767,7 +767,7 @@ printint(int fd, int xx, int base, int sgn)
  4a2:	31 d2                	xor    %edx,%edx
  4a4:	8d 7e 01             	lea    0x1(%esi),%edi
  4a7:	f7 f1                	div    %ecx
- 4a9:	0f b6 92 9c 0a 00 00 	movzbl 0xa9c(%edx),%edx
+ 4a9:	0f b6 92 8c 0a 00 00 	movzbl 0xa8c(%edx),%edx
   }while((x /= base) != 0);
  4b0:	85 c0                	test   %eax,%eax
     buf[i++] = digits[x % base];
@@ -1058,7 +1058,7 @@ printf(int fd, char *fmt, ...)
  6c2:	31 ff                	xor    %edi,%edi
  6c4:	e9 8f fe ff ff       	jmp    558 <printf+0x48>
           s = "(null)";
- 6c9:	bb 93 0a 00 00       	mov    $0xa93,%ebx
+ 6c9:	bb 83 0a 00 00       	mov    $0xa83,%ebx
         while(*s != 0){
  6ce:	b8 28 00 00 00       	mov    $0x28,%eax
  6d3:	e9 72 ff ff ff       	jmp    64a <printf+0x13a>
@@ -1079,7 +1079,7 @@ free(void *ap)
 
   bp = (Header*)ap - 1;
   for(p = freep; !(bp > p && bp < p->s.ptr); p = p->s.ptr)
- 6e1:	a1 40 0e 00 00       	mov    0xe40,%eax
+ 6e1:	a1 80 0e 00 00       	mov    0xe80,%eax
 {
  6e6:	89 e5                	mov    %esp,%ebp
  6e8:	57                   	push   %edi
@@ -1120,7 +1120,7 @@ free(void *ap)
     p->s.ptr = bp;
  71d:	89 08                	mov    %ecx,(%eax)
   freep = p;
- 71f:	a3 40 0e 00 00       	mov    %eax,0xe40
+ 71f:	a3 80 0e 00 00       	mov    %eax,0xe80
 }
  724:	5b                   	pop    %ebx
  725:	5e                   	pop    %esi
@@ -1152,7 +1152,7 @@ free(void *ap)
     p->s.size += bp->s.size;
  757:	03 53 fc             	add    -0x4(%ebx),%edx
   freep = p;
- 75a:	a3 40 0e 00 00       	mov    %eax,0xe40
+ 75a:	a3 80 0e 00 00       	mov    %eax,0xe80
     p->s.size += bp->s.size;
  75f:	89 50 04             	mov    %edx,0x4(%eax)
     p->s.ptr = bp->s.ptr;
@@ -1185,7 +1185,7 @@ malloc(uint nbytes)
   nunits = (nbytes + sizeof(Header) - 1)/sizeof(Header) + 1;
  779:	8b 45 08             	mov    0x8(%ebp),%eax
   if((prevp = freep) == 0){
- 77c:	8b 15 40 0e 00 00    	mov    0xe40,%edx
+ 77c:	8b 15 80 0e 00 00    	mov    0xe80,%edx
   nunits = (nbytes + sizeof(Header) - 1)/sizeof(Header) + 1;
  782:	8d 78 07             	lea    0x7(%eax),%edi
  785:	c1 ef 03             	shr    $0x3,%edi
@@ -1222,7 +1222,7 @@ malloc(uint nbytes)
       return (void*)(p + 1);
     }
     if(p == freep)
- 7c1:	39 05 40 0e 00 00    	cmp    %eax,0xe40
+ 7c1:	39 05 80 0e 00 00    	cmp    %eax,0xe80
  7c7:	89 c2                	mov    %eax,%edx
  7c9:	75 ed                	jne    7b8 <malloc+0x48>
   p = sbrk(nu * sizeof(Header));
@@ -1241,7 +1241,7 @@ malloc(uint nbytes)
  7e5:	50                   	push   %eax
  7e6:	e8 f5 fe ff ff       	call   6e0 <free>
   return freep;
- 7eb:	8b 15 40 0e 00 00    	mov    0xe40,%edx
+ 7eb:	8b 15 80 0e 00 00    	mov    0xe80,%edx
       if((p = morecore(nunits)) == 0)
  7f1:	83 c4 10             	add    $0x10,%esp
  7f4:	85 d2                	test   %edx,%edx
@@ -1270,7 +1270,7 @@ malloc(uint nbytes)
         p->s.size = nunits;
  814:	89 78 04             	mov    %edi,0x4(%eax)
       freep = prevp;
- 817:	89 15 40 0e 00 00    	mov    %edx,0xe40
+ 817:	89 15 80 0e 00 00    	mov    %edx,0xe80
 }
  81d:	8d 65 f4             	lea    -0xc(%ebp),%esp
       return (void*)(p + 1);
@@ -1284,13 +1284,13 @@ malloc(uint nbytes)
  828:	90                   	nop
  829:	8d b4 26 00 00 00 00 	lea    0x0(%esi,%eiz,1),%esi
     base.s.ptr = freep = prevp = &base;
- 830:	c7 05 40 0e 00 00 44 	movl   $0xe44,0xe40
+ 830:	c7 05 80 0e 00 00 84 	movl   $0xe84,0xe80
  837:	0e 00 00 
- 83a:	c7 05 44 0e 00 00 44 	movl   $0xe44,0xe44
+ 83a:	c7 05 84 0e 00 00 84 	movl   $0xe84,0xe84
  841:	0e 00 00 
     base.s.size = 0;
- 844:	b8 44 0e 00 00       	mov    $0xe44,%eax
- 849:	c7 05 48 0e 00 00 00 	movl   $0x0,0xe48
+ 844:	b8 84 0e 00 00       	mov    $0xe84,%eax
+ 849:	c7 05 88 0e 00 00 00 	movl   $0x0,0xe88
  850:	00 00 00 
  853:	e9 44 ff ff ff       	jmp    79c <malloc+0x2c>
  858:	90                   	nop
@@ -1305,290 +1305,287 @@ malloc(uint nbytes)
  86c:	66 90                	xchg   %ax,%ax
  86e:	66 90                	xchg   %ax,%ax
 
-00000870 <add_thread>:
-    int pid;
+00000870 <remove_thread>:
     void *ustack;
     int used;
-}threads[NTHREAD];
+} threads[NTHREAD] = {0};
 
-void add_thread(int* pid, void* ustack){
- 870:	ba 60 0e 00 00       	mov    $0xe60,%edx
+void remove_thread(int *pid)
+{
+ 870:	55                   	push   %ebp
+ 871:	b8 a0 0e 00 00       	mov    $0xea0,%eax
     for (int i = 0; i < NTHREAD; ++i)
- 875:	31 c0                	xor    %eax,%eax
+ 876:	31 d2                	xor    %edx,%edx
+{
+ 878:	89 e5                	mov    %esp,%ebp
+ 87a:	56                   	push   %esi
+ 87b:	53                   	push   %ebx
+ 87c:	8b 4d 08             	mov    0x8(%ebp),%ecx
     {
-        if(threads[i].used == 0){
- 877:	8b 4a 08             	mov    0x8(%edx),%ecx
- 87a:	85 c9                	test   %ecx,%ecx
- 87c:	74 12                	je     890 <add_thread+0x20>
+        if (threads[i].used && threads[i].pid == *pid)
+ 87f:	8b 58 08             	mov    0x8(%eax),%ebx
+ 882:	85 db                	test   %ebx,%ebx
+ 884:	74 06                	je     88c <remove_thread+0x1c>
+ 886:	8b 31                	mov    (%ecx),%esi
+ 888:	39 30                	cmp    %esi,(%eax)
+ 88a:	74 14                	je     8a0 <remove_thread+0x30>
     for (int i = 0; i < NTHREAD; ++i)
- 87e:	83 c0 01             	add    $0x1,%eax
- 881:	83 c2 0c             	add    $0xc,%edx
- 884:	83 f8 04             	cmp    $0x4,%eax
- 887:	75 ee                	jne    877 <add_thread+0x7>
- 889:	f3 c3                	repz ret 
- 88b:	90                   	nop
- 88c:	8d 74 26 00          	lea    0x0(%esi,%eiz,1),%esi
-void add_thread(int* pid, void* ustack){
- 890:	55                   	push   %ebp
-            threads[i].pid = *pid;
- 891:	8d 04 40             	lea    (%eax,%eax,2),%eax
-void add_thread(int* pid, void* ustack){
- 894:	89 e5                	mov    %esp,%ebp
-            threads[i].pid = *pid;
- 896:	c1 e0 02             	shl    $0x2,%eax
- 899:	8b 55 08             	mov    0x8(%ebp),%edx
- 89c:	8b 0a                	mov    (%edx),%ecx
- 89e:	8d 90 60 0e 00 00    	lea    0xe60(%eax),%edx
-            threads[i].ustack = ustack;
-            threads[i].used = 1;
- 8a4:	c7 42 08 01 00 00 00 	movl   $0x1,0x8(%edx)
-            threads[i].pid = *pid;
- 8ab:	89 88 60 0e 00 00    	mov    %ecx,0xe60(%eax)
-            threads[i].ustack = ustack;
- 8b1:	8b 45 0c             	mov    0xc(%ebp),%eax
- 8b4:	89 42 04             	mov    %eax,0x4(%edx)
-            break;
-        }
-    }
-}
- 8b7:	5d                   	pop    %ebp
- 8b8:	c3                   	ret    
- 8b9:	8d b4 26 00 00 00 00 	lea    0x0(%esi,%eiz,1),%esi
-
-000008c0 <remove_thread>:
-
-void remove_thread(int* pid){
- 8c0:	55                   	push   %ebp
- 8c1:	b8 60 0e 00 00       	mov    $0xe60,%eax
-    for (int i = 0; i < NTHREAD; ++i)
- 8c6:	31 d2                	xor    %edx,%edx
-void remove_thread(int* pid){
- 8c8:	89 e5                	mov    %esp,%ebp
- 8ca:	56                   	push   %esi
- 8cb:	53                   	push   %ebx
- 8cc:	8b 4d 08             	mov    0x8(%ebp),%ecx
-    {
-        if(threads[i].used && threads[i].pid == *pid){
- 8cf:	8b 58 08             	mov    0x8(%eax),%ebx
- 8d2:	85 db                	test   %ebx,%ebx
- 8d4:	74 06                	je     8dc <remove_thread+0x1c>
- 8d6:	8b 31                	mov    (%ecx),%esi
- 8d8:	39 30                	cmp    %esi,(%eax)
- 8da:	74 14                	je     8f0 <remove_thread+0x30>
-    for (int i = 0; i < NTHREAD; ++i)
- 8dc:	83 c2 01             	add    $0x1,%edx
- 8df:	83 c0 0c             	add    $0xc,%eax
- 8e2:	83 fa 04             	cmp    $0x4,%edx
- 8e5:	75 e8                	jne    8cf <remove_thread+0xf>
+ 88c:	83 c2 01             	add    $0x1,%edx
+ 88f:	83 c0 0c             	add    $0xc,%eax
+ 892:	83 fa 04             	cmp    $0x4,%edx
+ 895:	75 e8                	jne    87f <remove_thread+0xf>
             threads[i].ustack = 0;
             threads[i].used = 0;
             break;
         }
     }
 }
- 8e7:	8d 65 f8             	lea    -0x8(%ebp),%esp
- 8ea:	5b                   	pop    %ebx
- 8eb:	5e                   	pop    %esi
- 8ec:	5d                   	pop    %ebp
- 8ed:	c3                   	ret    
- 8ee:	66 90                	xchg   %ax,%ax
+ 897:	8d 65 f8             	lea    -0x8(%ebp),%esp
+ 89a:	5b                   	pop    %ebx
+ 89b:	5e                   	pop    %esi
+ 89c:	5d                   	pop    %ebp
+ 89d:	c3                   	ret    
+ 89e:	66 90                	xchg   %ax,%ax
             free(threads[i].ustack);
- 8f0:	8d 1c 52             	lea    (%edx,%edx,2),%ebx
- 8f3:	83 ec 0c             	sub    $0xc,%esp
- 8f6:	c1 e3 02             	shl    $0x2,%ebx
- 8f9:	ff b3 64 0e 00 00    	pushl  0xe64(%ebx)
- 8ff:	e8 dc fd ff ff       	call   6e0 <free>
+ 8a0:	8d 1c 52             	lea    (%edx,%edx,2),%ebx
+ 8a3:	83 ec 0c             	sub    $0xc,%esp
+ 8a6:	c1 e3 02             	shl    $0x2,%ebx
+ 8a9:	ff b3 a4 0e 00 00    	pushl  0xea4(%ebx)
+ 8af:	e8 2c fe ff ff       	call   6e0 <free>
             threads[i].pid = 0;
- 904:	c7 83 60 0e 00 00 00 	movl   $0x0,0xe60(%ebx)
- 90b:	00 00 00 
+ 8b4:	c7 83 a0 0e 00 00 00 	movl   $0x0,0xea0(%ebx)
+ 8bb:	00 00 00 
             threads[i].ustack = 0;
- 90e:	c7 83 64 0e 00 00 00 	movl   $0x0,0xe64(%ebx)
- 915:	00 00 00 
+ 8be:	c7 83 a4 0e 00 00 00 	movl   $0x0,0xea4(%ebx)
+ 8c5:	00 00 00 
             break;
- 918:	83 c4 10             	add    $0x10,%esp
+ 8c8:	83 c4 10             	add    $0x10,%esp
             threads[i].used = 0;
- 91b:	c7 83 68 0e 00 00 00 	movl   $0x0,0xe68(%ebx)
- 922:	00 00 00 
+ 8cb:	c7 83 a8 0e 00 00 00 	movl   $0x0,0xea8(%ebx)
+ 8d2:	00 00 00 
 }
- 925:	8d 65 f8             	lea    -0x8(%ebp),%esp
- 928:	5b                   	pop    %ebx
- 929:	5e                   	pop    %esi
- 92a:	5d                   	pop    %ebp
- 92b:	c3                   	ret    
- 92c:	8d 74 26 00          	lea    0x0(%esi,%eiz,1),%esi
+ 8d5:	8d 65 f8             	lea    -0x8(%ebp),%esp
+ 8d8:	5b                   	pop    %ebx
+ 8d9:	5e                   	pop    %esi
+ 8da:	5d                   	pop    %ebp
+ 8db:	c3                   	ret    
+ 8dc:	8d 74 26 00          	lea    0x0(%esi,%eiz,1),%esi
 
-00000930 <thread_create>:
+000008e0 <findPos>:
 
-int thread_create(void(*start_routine)(void*), void *arg){
- 930:	55                   	push   %ebp
- 931:	89 e5                	mov    %esp,%ebp
- 933:	53                   	push   %ebx
- 934:	83 ec 04             	sub    $0x4,%esp
-    static int first = 1;
-    if(first){
- 937:	a1 20 0e 00 00       	mov    0xe20,%eax
- 93c:	85 c0                	test   %eax,%eax
- 93e:	74 2d                	je     96d <thread_create+0x3d>
-        first = 0;
- 940:	c7 05 20 0e 00 00 00 	movl   $0x0,0xe20
- 947:	00 00 00 
- 94a:	b8 60 0e 00 00       	mov    $0xe60,%eax
-        for (int i = 0; i < NTHREAD; ++i)
+int findPos()
+{
+ 8e0:	55                   	push   %ebp
+ 8e1:	ba a0 0e 00 00       	mov    $0xea0,%edx
+    for (int i = 0; i < NTHREAD; ++i)
+ 8e6:	31 c0                	xor    %eax,%eax
+{
+ 8e8:	89 e5                	mov    %esp,%ebp
+    {
+        if (threads[i].used == 0)
+ 8ea:	8b 4a 08             	mov    0x8(%edx),%ecx
+ 8ed:	85 c9                	test   %ecx,%ecx
+ 8ef:	74 10                	je     901 <findPos+0x21>
+    for (int i = 0; i < NTHREAD; ++i)
+ 8f1:	83 c0 01             	add    $0x1,%eax
+ 8f4:	83 c2 0c             	add    $0xc,%edx
+ 8f7:	83 f8 04             	cmp    $0x4,%eax
+ 8fa:	75 ee                	jne    8ea <findPos+0xa>
         {
-            threads[i].pid = 0;
- 94f:	c7 00 00 00 00 00    	movl   $0x0,(%eax)
-            threads[i].ustack = 0;
- 955:	c7 40 04 00 00 00 00 	movl   $0x0,0x4(%eax)
- 95c:	83 c0 0c             	add    $0xc,%eax
-            threads[i].used = 0;
- 95f:	c7 40 fc 00 00 00 00 	movl   $0x0,-0x4(%eax)
-        for (int i = 0; i < NTHREAD; ++i)
- 966:	3d 90 0e 00 00       	cmp    $0xe90,%eax
- 96b:	75 e2                	jne    94f <thread_create+0x1f>
+            return i;
         }
     }
-    void *stack = malloc(PGSIZE);
- 96d:	83 ec 0c             	sub    $0xc,%esp
- 970:	68 00 10 00 00       	push   $0x1000
- 975:	e8 f6 fd ff ff       	call   770 <malloc>
-    int pid = clone(start_routine, arg, stack);
- 97a:	83 c4 0c             	add    $0xc,%esp
-    void *stack = malloc(PGSIZE);
- 97d:	89 c3                	mov    %eax,%ebx
-    int pid = clone(start_routine, arg, stack);
- 97f:	50                   	push   %eax
- 980:	ff 75 0c             	pushl  0xc(%ebp)
- 983:	ff 75 08             	pushl  0x8(%ebp)
- 986:	e8 bf fa ff ff       	call   44a <clone>
- 98b:	b9 60 0e 00 00       	mov    $0xe60,%ecx
- 990:	83 c4 10             	add    $0x10,%esp
+    return -1;
+ 8fc:	b8 ff ff ff ff       	mov    $0xffffffff,%eax
+}
+ 901:	5d                   	pop    %ebp
+ 902:	c3                   	ret    
+ 903:	8d b6 00 00 00 00    	lea    0x0(%esi),%esi
+ 909:	8d bc 27 00 00 00 00 	lea    0x0(%edi,%eiz,1),%edi
+
+00000910 <thread_create>:
+
+int thread_create(void (*start_routine)(void *), void *arg)
+{
+ 910:	55                   	push   %ebp
+ 911:	b8 a0 0e 00 00       	mov    $0xea0,%eax
+ 916:	89 e5                	mov    %esp,%ebp
+ 918:	56                   	push   %esi
+ 919:	53                   	push   %ebx
     for (int i = 0; i < NTHREAD; ++i)
- 993:	31 d2                	xor    %edx,%edx
-        if(threads[i].used == 0){
- 995:	83 79 08 00          	cmpl   $0x0,0x8(%ecx)
- 999:	74 15                	je     9b0 <thread_create+0x80>
+ 91a:	31 db                	xor    %ebx,%ebx
+{
+ 91c:	83 ec 10             	sub    $0x10,%esp
+        if (threads[i].used == 0)
+ 91f:	8b 50 08             	mov    0x8(%eax),%edx
+ 922:	85 d2                	test   %edx,%edx
+ 924:	74 2a                	je     950 <thread_create+0x40>
     for (int i = 0; i < NTHREAD; ++i)
- 99b:	83 c2 01             	add    $0x1,%edx
- 99e:	83 c1 0c             	add    $0xc,%ecx
- 9a1:	83 fa 04             	cmp    $0x4,%edx
- 9a4:	75 ef                	jne    995 <thread_create+0x65>
-    add_thread(&pid,stack);
+ 926:	83 c3 01             	add    $0x1,%ebx
+ 929:	83 c0 0c             	add    $0xc,%eax
+ 92c:	83 fb 04             	cmp    $0x4,%ebx
+ 92f:	75 ee                	jne    91f <thread_create+0xf>
+    int pos = findPos();
+    if (pos == -1)
+    {
+        printf(1, "Create thread failed! Perhaps because there are too many threads!\n");
+ 931:	83 ec 08             	sub    $0x8,%esp
+ 934:	68 b8 0a 00 00       	push   $0xab8
+ 939:	6a 01                	push   $0x1
+ 93b:	e8 d0 fb ff ff       	call   510 <printf>
+        return -1;
+ 940:	83 c4 10             	add    $0x10,%esp
+        threads[pos].pid = pid;
+        threads[pos].ustack = stack;
+        threads[pos].used = 1;
+    }
     return pid;
 }
- 9a6:	8b 5d fc             	mov    -0x4(%ebp),%ebx
- 9a9:	c9                   	leave  
- 9aa:	c3                   	ret    
- 9ab:	90                   	nop
- 9ac:	8d 74 26 00          	lea    0x0(%esi,%eiz,1),%esi
-            threads[i].pid = *pid;
- 9b0:	8d 14 52             	lea    (%edx,%edx,2),%edx
- 9b3:	c1 e2 02             	shl    $0x2,%edx
-            threads[i].ustack = ustack;
- 9b6:	89 9a 64 0e 00 00    	mov    %ebx,0xe64(%edx)
-            threads[i].pid = *pid;
- 9bc:	89 82 60 0e 00 00    	mov    %eax,0xe60(%edx)
-            threads[i].used = 1;
- 9c2:	c7 82 68 0e 00 00 01 	movl   $0x1,0xe68(%edx)
- 9c9:	00 00 00 
+ 943:	8d 65 f8             	lea    -0x8(%ebp),%esp
+        return -1;
+ 946:	b8 ff ff ff ff       	mov    $0xffffffff,%eax
 }
- 9cc:	8b 5d fc             	mov    -0x4(%ebp),%ebx
- 9cf:	c9                   	leave  
- 9d0:	c3                   	ret    
- 9d1:	eb 0d                	jmp    9e0 <thread_join>
- 9d3:	90                   	nop
- 9d4:	90                   	nop
- 9d5:	90                   	nop
- 9d6:	90                   	nop
- 9d7:	90                   	nop
- 9d8:	90                   	nop
- 9d9:	90                   	nop
- 9da:	90                   	nop
- 9db:	90                   	nop
- 9dc:	90                   	nop
- 9dd:	90                   	nop
- 9de:	90                   	nop
- 9df:	90                   	nop
+ 94b:	5b                   	pop    %ebx
+ 94c:	5e                   	pop    %esi
+ 94d:	5d                   	pop    %ebp
+ 94e:	c3                   	ret    
+ 94f:	90                   	nop
+    void *stack = malloc(PGSIZE);
+ 950:	83 ec 0c             	sub    $0xc,%esp
+ 953:	68 00 10 00 00       	push   $0x1000
+ 958:	e8 13 fe ff ff       	call   770 <malloc>
+    int pid = clone(start_routine, arg, stack);
+ 95d:	83 c4 0c             	add    $0xc,%esp
+    void *stack = malloc(PGSIZE);
+ 960:	89 c6                	mov    %eax,%esi
+    int pid = clone(start_routine, arg, stack);
+ 962:	50                   	push   %eax
+ 963:	ff 75 0c             	pushl  0xc(%ebp)
+ 966:	ff 75 08             	pushl  0x8(%ebp)
+ 969:	e8 dc fa ff ff       	call   44a <clone>
+    if (pid == -1)
+ 96e:	83 c4 10             	add    $0x10,%esp
+ 971:	83 f8 ff             	cmp    $0xffffffff,%eax
+ 974:	74 2a                	je     9a0 <thread_create+0x90>
+        threads[pos].pid = pid;
+ 976:	8d 14 5b             	lea    (%ebx,%ebx,2),%edx
+ 979:	c1 e2 02             	shl    $0x2,%edx
+        threads[pos].ustack = stack;
+ 97c:	89 b2 a4 0e 00 00    	mov    %esi,0xea4(%edx)
+        threads[pos].pid = pid;
+ 982:	89 82 a0 0e 00 00    	mov    %eax,0xea0(%edx)
+        threads[pos].used = 1;
+ 988:	c7 82 a8 0e 00 00 01 	movl   $0x1,0xea8(%edx)
+ 98f:	00 00 00 
+}
+ 992:	8d 65 f8             	lea    -0x8(%ebp),%esp
+ 995:	5b                   	pop    %ebx
+ 996:	5e                   	pop    %esi
+ 997:	5d                   	pop    %ebp
+ 998:	c3                   	ret    
+ 999:	8d b4 26 00 00 00 00 	lea    0x0(%esi,%eiz,1),%esi
+        printf(1, "clone failed!\n");
+ 9a0:	83 ec 08             	sub    $0x8,%esp
+ 9a3:	89 45 f4             	mov    %eax,-0xc(%ebp)
+ 9a6:	68 9d 0a 00 00       	push   $0xa9d
+ 9ab:	6a 01                	push   $0x1
+ 9ad:	e8 5e fb ff ff       	call   510 <printf>
+        free(stack);
+ 9b2:	89 34 24             	mov    %esi,(%esp)
+ 9b5:	e8 26 fd ff ff       	call   6e0 <free>
+ 9ba:	8b 45 f4             	mov    -0xc(%ebp),%eax
+ 9bd:	83 c4 10             	add    $0x10,%esp
+}
+ 9c0:	8d 65 f8             	lea    -0x8(%ebp),%esp
+ 9c3:	5b                   	pop    %ebx
+ 9c4:	5e                   	pop    %esi
+ 9c5:	5d                   	pop    %ebp
+ 9c6:	c3                   	ret    
+ 9c7:	89 f6                	mov    %esi,%esi
+ 9c9:	8d bc 27 00 00 00 00 	lea    0x0(%edi,%eiz,1),%edi
 
-000009e0 <thread_join>:
+000009d0 <thread_join>:
 
-int thread_join(void){
- 9e0:	55                   	push   %ebp
- 9e1:	89 e5                	mov    %esp,%ebp
- 9e3:	53                   	push   %ebx
- 9e4:	bb 60 0e 00 00       	mov    $0xe60,%ebx
- 9e9:	83 ec 14             	sub    $0x14,%esp
-    for(int i = 0; i < NTHREAD; ++i){
-        if(threads[i].used == 1){
- 9ec:	83 7b 08 01          	cmpl   $0x1,0x8(%ebx)
- 9f0:	74 16                	je     a08 <thread_join+0x28>
- 9f2:	83 c3 0c             	add    $0xc,%ebx
-    for(int i = 0; i < NTHREAD; ++i){
- 9f5:	81 fb 90 0e 00 00    	cmp    $0xe90,%ebx
- 9fb:	75 ef                	jne    9ec <thread_join+0xc>
+int thread_join(void)
+{
+ 9d0:	55                   	push   %ebp
+ 9d1:	89 e5                	mov    %esp,%ebp
+ 9d3:	53                   	push   %ebx
+ 9d4:	bb a0 0e 00 00       	mov    $0xea0,%ebx
+ 9d9:	83 ec 14             	sub    $0x14,%esp
+    for (int i = 0; i < NTHREAD; ++i)
+    {
+        if (threads[i].used == 1)
+ 9dc:	83 7b 08 01          	cmpl   $0x1,0x8(%ebx)
+ 9e0:	74 16                	je     9f8 <thread_join+0x28>
+ 9e2:	83 c3 0c             	add    $0xc,%ebx
+    for (int i = 0; i < NTHREAD; ++i)
+ 9e5:	81 fb d0 0e 00 00    	cmp    $0xed0,%ebx
+ 9eb:	75 ef                	jne    9dc <thread_join+0xc>
                 remove_thread(&pid);
                 return pid;
             }
         }
     }
     return 0;
- 9fd:	31 c0                	xor    %eax,%eax
+ 9ed:	31 c0                	xor    %eax,%eax
 }
- 9ff:	8b 5d fc             	mov    -0x4(%ebp),%ebx
- a02:	c9                   	leave  
- a03:	c3                   	ret    
- a04:	8d 74 26 00          	lea    0x0(%esi,%eiz,1),%esi
+ 9ef:	8b 5d fc             	mov    -0x4(%ebp),%ebx
+ 9f2:	c9                   	leave  
+ 9f3:	c3                   	ret    
+ 9f4:	8d 74 26 00          	lea    0x0(%esi,%eiz,1),%esi
             int pid = join(&threads[i].ustack);
- a08:	8d 43 04             	lea    0x4(%ebx),%eax
- a0b:	83 ec 0c             	sub    $0xc,%esp
- a0e:	50                   	push   %eax
- a0f:	e8 3e fa ff ff       	call   452 <join>
-            if(pid > 0){
- a14:	83 c4 10             	add    $0x10,%esp
- a17:	85 c0                	test   %eax,%eax
+ 9f8:	8d 43 04             	lea    0x4(%ebx),%eax
+ 9fb:	83 ec 0c             	sub    $0xc,%esp
+ 9fe:	50                   	push   %eax
+ 9ff:	e8 4e fa ff ff       	call   452 <join>
+            if (pid > 0)
+ a04:	83 c4 10             	add    $0x10,%esp
+ a07:	85 c0                	test   %eax,%eax
             int pid = join(&threads[i].ustack);
- a19:	89 45 f4             	mov    %eax,-0xc(%ebp)
-            if(pid > 0){
- a1c:	7e d4                	jle    9f2 <thread_join+0x12>
+ a09:	89 45 f4             	mov    %eax,-0xc(%ebp)
+            if (pid > 0)
+ a0c:	7e d4                	jle    9e2 <thread_join+0x12>
                 remove_thread(&pid);
- a1e:	8d 45 f4             	lea    -0xc(%ebp),%eax
- a21:	83 ec 0c             	sub    $0xc,%esp
- a24:	50                   	push   %eax
- a25:	e8 96 fe ff ff       	call   8c0 <remove_thread>
+ a0e:	8d 45 f4             	lea    -0xc(%ebp),%eax
+ a11:	83 ec 0c             	sub    $0xc,%esp
+ a14:	50                   	push   %eax
+ a15:	e8 56 fe ff ff       	call   870 <remove_thread>
                 return pid;
- a2a:	8b 45 f4             	mov    -0xc(%ebp),%eax
- a2d:	83 c4 10             	add    $0x10,%esp
- a30:	eb cd                	jmp    9ff <thread_join+0x1f>
- a32:	8d b4 26 00 00 00 00 	lea    0x0(%esi,%eiz,1),%esi
- a39:	8d bc 27 00 00 00 00 	lea    0x0(%edi,%eiz,1),%edi
+ a1a:	8b 45 f4             	mov    -0xc(%ebp),%eax
+ a1d:	83 c4 10             	add    $0x10,%esp
+ a20:	eb cd                	jmp    9ef <thread_join+0x1f>
+ a22:	8d b4 26 00 00 00 00 	lea    0x0(%esi,%eiz,1),%esi
+ a29:	8d bc 27 00 00 00 00 	lea    0x0(%edi,%eiz,1),%edi
 
-00000a40 <printTCB>:
+00000a30 <printTCB>:
 
-void printTCB(void){
- a40:	55                   	push   %ebp
- a41:	89 e5                	mov    %esp,%ebp
+void printTCB(void)
+{
+ a30:	55                   	push   %ebp
+ a31:	89 e5                	mov    %esp,%ebp
+ a33:	53                   	push   %ebx
+    for (int i = 0; i < NTHREAD; ++i)
+ a34:	31 db                	xor    %ebx,%ebx
+{
+ a36:	83 ec 04             	sub    $0x4,%esp
+    {
+        printf(1, "TCB %d:%d\n", i, threads[i].used);
+ a39:	8d 04 5b             	lea    (%ebx,%ebx,2),%eax
+ a3c:	ff 34 85 a8 0e 00 00 	pushl  0xea8(,%eax,4)
  a43:	53                   	push   %ebx
     for (int i = 0; i < NTHREAD; ++i)
- a44:	31 db                	xor    %ebx,%ebx
-void printTCB(void){
- a46:	83 ec 04             	sub    $0x4,%esp
-    {
-        printf(1,"TCB %d:%d\n",i,threads[i].used);
- a49:	8d 04 5b             	lea    (%ebx,%ebx,2),%eax
- a4c:	ff 34 85 68 0e 00 00 	pushl  0xe68(,%eax,4)
- a53:	53                   	push   %ebx
+ a44:	83 c3 01             	add    $0x1,%ebx
+        printf(1, "TCB %d:%d\n", i, threads[i].used);
+ a47:	68 ac 0a 00 00       	push   $0xaac
+ a4c:	6a 01                	push   $0x1
+ a4e:	e8 bd fa ff ff       	call   510 <printf>
     for (int i = 0; i < NTHREAD; ++i)
- a54:	83 c3 01             	add    $0x1,%ebx
-        printf(1,"TCB %d:%d\n",i,threads[i].used);
- a57:	68 ad 0a 00 00       	push   $0xaad
- a5c:	6a 01                	push   $0x1
- a5e:	e8 ad fa ff ff       	call   510 <printf>
-    for (int i = 0; i < NTHREAD; ++i)
- a63:	83 c4 10             	add    $0x10,%esp
- a66:	83 fb 04             	cmp    $0x4,%ebx
- a69:	75 de                	jne    a49 <printTCB+0x9>
+ a53:	83 c4 10             	add    $0x10,%esp
+ a56:	83 fb 04             	cmp    $0x4,%ebx
+ a59:	75 de                	jne    a39 <printTCB+0x9>
     }
-    
 }
- a6b:	8b 5d fc             	mov    -0x4(%ebp),%ebx
- a6e:	c9                   	leave  
- a6f:	c3                   	ret    
+ a5b:	8b 5d fc             	mov    -0x4(%ebp),%ebx
+ a5e:	c9                   	leave  
+ a5f:	c3                   	ret    

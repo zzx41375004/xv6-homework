@@ -63,8 +63,8 @@ struct proc {
   enum procstate state;        // Process state
   int pid;                     // Process ID
   struct proc *parent;         // Parent process
-  struct proc *son[MAXSON];             // 记录子进程在ptable中的位置
-  int numberOfSon;             // 记录子进程的数目
+  struct proc *son[MAXSON];    // 记录子进程在ptable中的位置
+  int numofchild;             // 记录子进程的数目
   struct trapframe *tf;        // Trap frame for current syscall
   struct context *context;     // swtch() here to run process
   void *chan;                  // If non-zero, sleeping on chan
@@ -74,6 +74,8 @@ struct proc {
   char name[16];               // Process name (debugging)
   struct vma vm[10];
   struct proc *pthread;
+  struct proc *cthread[MAXTHREADS]; //记录子线程的位置
+  int numofthreads;           //记录子线程的数量
   void *ustack; 
   int priority; 
   int cpuID;                   //记录在哪个核上运行

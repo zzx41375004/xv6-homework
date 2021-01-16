@@ -8,24 +8,14 @@ struct
     int pid;
     void *ustack;
     int used;
-}threads[NTHREAD];
+} threads[NTHREAD] = {0};
 
-void add_thread(int* pid, void* ustack){
+void remove_thread(int *pid)
+{
     for (int i = 0; i < NTHREAD; ++i)
     {
-        if(threads[i].used == 0){
-            threads[i].pid = *pid;
-            threads[i].ustack = ustack;
-            threads[i].used = 1;
-            break;
-        }
-    }
-}
-
-void remove_thread(int* pid){
-    for (int i = 0; i < NTHREAD; ++i)
-    {
-        if(threads[i].used && threads[i].pid == *pid){
+        if (threads[i].used && threads[i].pid == *pid)
+        {
             free(threads[i].ustack);
             threads[i].pid = 0;
             threads[i].ustack = 0;
@@ -35,28 +25,51 @@ void remove_thread(int* pid){
     }
 }
 
-int thread_create(void(*start_routine)(void*), void *arg){
-    static int first = 1;
-    if(first){
-        first = 0;
-        for (int i = 0; i < NTHREAD; ++i)
+int findPos()
+{
+    for (int i = 0; i < NTHREAD; ++i)
+    {
+        if (threads[i].used == 0)
         {
-            threads[i].pid = 0;
-            threads[i].ustack = 0;
-            threads[i].used = 0;
+            return i;
         }
+    }
+    return -1;
+}
+
+int thread_create(void (*start_routine)(void *), void *arg)
+{
+    int pos = findPos();
+    if (pos == -1)
+    {
+        printf(1, "Create thread failed! Perhaps because there are too many threads!\n");
+        return -1;
     }
     void *stack = malloc(PGSIZE);
     int pid = clone(start_routine, arg, stack);
-    add_thread(&pid,stack);
+    if (pid == -1)
+    {
+        printf(1, "clone failed!\n");
+        free(stack);
+    }
+    else
+    {
+        threads[pos].pid = pid;
+        threads[pos].ustack = stack;
+        threads[pos].used = 1;
+    }
     return pid;
 }
 
-int thread_join(void){
-    for(int i = 0; i < NTHREAD; ++i){
-        if(threads[i].used == 1){
+int thread_join(void)
+{
+    for (int i = 0; i < NTHREAD; ++i)
+    {
+        if (threads[i].used == 1)
+        {
             int pid = join(&threads[i].ustack);
-            if(pid > 0){
+            if (pid > 0)
+            {
                 remove_thread(&pid);
                 return pid;
             }
@@ -65,11 +78,10 @@ int thread_join(void){
     return 0;
 }
 
-void printTCB(void){
+void printTCB(void)
+{
     for (int i = 0; i < NTHREAD; ++i)
     {
-        printf(1,"TCB %d:%d\n",i,threads[i].used);
+        printf(1, "TCB %d:%d\n", i, threads[i].used);
     }
-    
 }
-
